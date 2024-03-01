@@ -8,8 +8,23 @@ my_ip = my_private_ip()
 # Get all the for all hosts in the cluster
 #
 all_hosts = ""
-node['karamel']['default']['private_ips'].each_with_index do |ip, index|
-  all_hosts = all_hosts + "User:hopsworks#{index}.logicalclocks.com;"
+if node['karamel']['default'].attribute?('private_ips') == false || node['karamel']['default']['private_ips'].empty?
+  hostf = Resolv::Hosts.new
+  dnsr = Resolv::DNS.new
+  for h in node['kkafka']['default']['private_ips']
+    # Convert all private_ips to their hostnames
+    # Kafka requires fqdns to work - won't work with IPs
+    begin
+      hostname = hostf.getname(h)
+    rescue
+      hostname = dnsr.getname(h).to_s()
+    end
+    all_hosts = all_hosts + "User:" + hostname + ";"
+  end
+else
+  node['karamel']['default']['private_ips'].each_with_index do |ip, index|
+    all_hosts = all_hosts + "User:hopsworks#{index}.logicalclocks.com;"
+  end
 end
 
 all_hosts = all_hosts + "User:#{node['kkafka']['user']}"
