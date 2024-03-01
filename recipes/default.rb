@@ -8,18 +8,10 @@ my_ip = my_private_ip()
 # Get all the for all hosts in the cluster
 #
 all_hosts = ""
-hostf = Resolv::Hosts.new
-dnsr = Resolv::DNS.new
-for h in node['kkafka']['default']['private_ips']
-  # Convert all private_ips to their hostnames
-  # Kafa requires fqdns to work - won't work with IPs
-  begin
-    hostname = hostf.getname(h)
-  rescue
-    hostname = dnsr.getname(h).to_s()
-  end
-  all_hosts = all_hosts + "User:" + hostname + ";"
+node['karamel']['default']['private_ips'].each_with_index do |ip, index|
+  all_hosts = all_hosts + "User:hopsworks#{index}.logicalclocks.com;"
 end
+
 all_hosts = all_hosts + "User:#{node['kkafka']['user']}"
 
 # Append glassfish CN so that Hopsworks can connect to Kafka as admin
